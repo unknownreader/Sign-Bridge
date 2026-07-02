@@ -1,9 +1,4 @@
 // --- DOM Elements ---
-const tmModelUrlInput = document.getElementById('tm-model-url');
-const geminiApiKeyInput = document.getElementById('gemini-api-key');
-const saveSettingsBtn = document.getElementById('save-settings-btn');
-const settingsStatus = document.getElementById('settings-status');
-
 const webcamElement = document.getElementById('webcam');
 const cameraOverlay = document.getElementById('camera-overlay');
 const startCameraBtn = document.getElementById('start-camera-btn');
@@ -42,43 +37,50 @@ const IDLE_DELAY_MS = 4000;
 const CONFIDENCE_THRESHOLD = 0.88;
 const STABILITY_FRAMES = 5;
 
-// --- Load Saved Settings from localStorage on Startup ---
-window.addEventListener('DOMContentLoaded', async () => {
-    const savedUrl = localStorage.getItem('signbridge_tmModelUrl');
-    const savedKey = localStorage.getItem('signbridge_geminiApiKey');
+// --- Initialization ---
+const themeToggleBtn = document.getElementById('theme-toggle');
+const sunIcon = document.getElementById('sun-icon');
+const moonIcon = document.getElementById('moon-icon');
 
-    if (savedUrl) tmModelUrlInput.value = savedUrl;
-    if (savedKey) geminiApiKeyInput.value = savedKey;
-
-    if (savedUrl && savedKey) {
-        showSettingsStatus('Saved settings found. Loading model...', '');
-        await loadModel(savedUrl, savedKey);
+function updateThemeIcon(isDark) {
+    if (isDark) {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
     } else {
-        showSettingsStatus('Enter your Model URL and API Key, then click Save.', '');
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
     }
-});
+}
 
-// --- Save Settings & Load Model ---
-saveSettingsBtn.addEventListener('click', async () => {
-    const url = tmModelUrlInput.value.trim();
-    const key = geminiApiKeyInput.value.trim();
-
-    if (!url || !key) {
-        showSettingsStatus('Both fields are required.', 'error');
-        return;
+window.addEventListener('DOMContentLoaded', async () => {
+    // Theme initialization
+    const savedTheme = localStorage.getItem('signbridge_theme');
+    const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = savedTheme === 'dark' || (!savedTheme && isSystemDark);
+    
+    if (isDark) {
+        document.body.classList.add('dark-mode');
     }
+    updateThemeIcon(isDark);
 
-    // Save to localStorage (stays in browser only, never published)
-    localStorage.setItem('signbridge_tmModelUrl', url);
-    localStorage.setItem('signbridge_geminiApiKey', key);
+    themeToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isCurrentlyDark = document.body.classList.contains('dark-mode');
+        updateThemeIcon(isCurrentlyDark);
+        localStorage.setItem('signbridge_theme', isCurrentlyDark ? 'dark' : 'light');
+    });
 
-    await loadModel(url, key);
+    if (typeof CONFIG !== 'undefined' && CONFIG.TM_MODEL_URL && CONFIG.GEMINI_API_KEY) {
+        await loadModel(CONFIG.TM_MODEL_URL, CONFIG.GEMINI_API_KEY);
+    } else {
+        console.warn('CONFIG is missing. Please ensure config.js is loaded and contains TM_MODEL_URL and GEMINI_API_KEY.');
+        if (captureStatus) captureStatus.textContent = 'Status: Configuration missing. Check config.js';
+    }
 });
 
 async function loadModel(url, key) {
     try {
-        saveSettingsBtn.disabled = true;
-        showSettingsStatus('Loading Teachable Machine model...', '');
+        if (captureStatus) captureStatus.textContent = 'Status: Loading model...';
 
         let tmModelUrl = url;
         if (!tmModelUrl.endsWith('/')) {
@@ -92,19 +94,12 @@ async function loadModel(url, key) {
         model = await tmImage.load(modelURL, metadataURL);
         maxPredictions = model.getTotalClasses();
 
-        showSettingsStatus('Model loaded successfully! ✅', 'success');
+        if (captureStatus) captureStatus.textContent = 'Status: Model loaded successfully. Ready to enable camera.';
         updateCaptureButtonState();
     } catch (error) {
         console.error("Model loading error:", error);
-        showSettingsStatus('Failed to load model. Check the URL.', 'error');
-    } finally {
-        saveSettingsBtn.disabled = false;
+        if (captureStatus) captureStatus.textContent = 'Status: Failed to load model. Check console for details.';
     }
-}
-
-function showSettingsStatus(msg, type) {
-    settingsStatus.textContent = msg;
-    settingsStatus.className = 'status-msg ' + type;
 }
 
 // --- Camera Setup ---

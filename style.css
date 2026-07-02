@@ -1,14 +1,35 @@
 :root {
-    --bg-primary: #F3E4C9;
-    --bg-secondary: #D3D4C0;
+    --bg-primary: #FBEFEF;
+    --bg-secondary: #fdfaf5;
     --accent-color: #D3D4C0;
     --primary-action: #0A2947;
     --text-main: #0A2947;
     --text-muted: #8B5E3C;
     --border-radius: 12px;
     --box-shadow: 0 4px 12px rgba(10, 41, 71, 0.10);
-    --shadow-3d: 0 4px 0 #b0b1a8, 0 6px 12px rgba(10, 41, 71, 0.15);
+    --shadow-3d: 0 4px 0 #0A2947, 0 6px 12px rgba(10, 41, 71, 0.15);
+    --card-border: var(--accent-color);
+    --highlight-bg: #e8e9de;
+    --highlight-border: #8B5E3C;
+    --badge-bg: #F3E4C9;
+    --btn-text: #FBEFEF;
     --transition-speed: 0.3s;
+}
+
+body.dark-mode {
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --accent-color: #333333;
+    --primary-action: #4fa3f7;
+    --text-main: #f0f0f0;
+    --text-muted: #aaaaaa;
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-3d: 0 4px 0 #111111, 0 6px 12px rgba(0, 0, 0, 0.8);
+    --card-border: #333333;
+    --highlight-bg: #2a2a2a;
+    --highlight-border: #555555;
+    --badge-bg: #2a2a2a;
+    --btn-text: #121212;
 }
 
 * {
@@ -27,6 +48,7 @@ body {
     padding: 2rem;
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
 .container {
@@ -40,6 +62,7 @@ body {
 header {
     text-align: center;
     margin-bottom: 1rem;
+    position: relative;
 }
 
 header h1 {
@@ -47,7 +70,31 @@ header h1 {
     font-weight: 800;
     color: var(--primary-action);
     margin-bottom: 0.5rem;
-    text-shadow: 2px 3px 0px rgba(10, 41, 71, 0.25), 4px 5px 10px rgba(10, 41, 71, 0.12);
+    text-shadow: 2px 3px 0px rgba(0, 0, 0, 0.1), 4px 5px 10px rgba(0, 0, 0, 0.05);
+}
+
+.theme-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: none;
+    color: var(--primary-action);
+    cursor: pointer;
+    box-shadow: none;
+    padding: 0.25rem;
+    transition: transform 0.2s, color var(--transition-speed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-btn:hover {
+    transform: scale(1.1);
+}
+
+.theme-btn:active {
+    transform: scale(0.95);
 }
 
 header p {
@@ -56,81 +103,18 @@ header p {
 }
 
 .card {
-    background-color: #fdfaf5;
+    background-color: var(--bg-secondary);
     border-radius: var(--border-radius);
     padding: 1.5rem;
     box-shadow: var(--box-shadow);
-    border: 1px solid var(--accent-color);
+    border: 1px solid var(--card-border);
+    transition: background-color var(--transition-speed), border-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
-/* Settings/Configuration Panel */
-.settings-panel {
-    background-color: #fdfaf5;
-    border: 2px solid var(--primary-action);
-    box-shadow: 0 5px 0 #8B5E3C, 0 8px 18px rgba(10, 41, 71, 0.14);
-}
 
-.settings-panel h2 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    color: var(--primary-action);
-    border-bottom: 2px solid var(--accent-color);
-    padding-bottom: 0.5rem;
-}
 
-.settings-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-}
-
-@media (max-width: 600px) {
-    .settings-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.input-group label {
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-.input-group input {
-    padding: 0.75rem;
-    border: 2px solid var(--accent-color);
-    border-radius: 8px;
-    background-color: #fffdfb;
-    font-family: inherit;
-    font-size: 0.95rem;
-    color: var(--text-main);
-    outline: none;
-    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
-}
-
-.input-group input:focus {
-    border-color: var(--primary-action);
-    box-shadow: 0 0 0 3px rgba(10, 41, 71, 0.15);
-}
-
-.settings-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-/* 3D shadow for live feed frame */
+/* Live feed frame */
 .video-container.card {
-    box-shadow: 0 6px 0 #8B5E3C, 0 10px 20px rgba(10, 41, 71, 0.18);
-    border: 2px solid #8B5E3C;
     margin-bottom: 1.25rem;
 }
 
@@ -158,7 +142,7 @@ button:disabled {
 
 .primary-btn {
     background-color: var(--primary-action);
-    color: #F3E4C9;
+    color: var(--btn-text);
 }
 
 .primary-btn:hover:not(:disabled) {
@@ -167,22 +151,22 @@ button:disabled {
 
 .action-btn {
     background-color: var(--primary-action);
-    color: #F3E4C9;
+    color: var(--btn-text);
     font-size: 1.2rem;
     padding: 1rem 2rem;
     width: 100%;
-    box-shadow: 0 5px 0 #071e35, 0 8px 16px rgba(10, 41, 71, 0.35);
-    transition: transform 0.1s, box-shadow 0.1s, background-color var(--transition-speed);
+    box-shadow: var(--shadow-3d);
+    transition: transform 0.1s, box-shadow 0.1s, background-color var(--transition-speed), color var(--transition-speed);
 }
 
 .action-btn:hover:not(:disabled) {
-    background-color: #0d3460;
-    box-shadow: 0 5px 0 #040f1a, 0 8px 16px rgba(10, 41, 71, 0.4);
+    filter: brightness(1.1);
+    box-shadow: var(--shadow-3d);
 }
 
 .action-btn:active:not(:disabled) {
     transform: translateY(3px);
-    box-shadow: 0 2px 0 #071e35, 0 4px 8px rgba(10, 41, 71, 0.25);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .status-msg {
@@ -355,18 +339,16 @@ button:disabled {
 }
 
 .recognized-signs {
-    box-shadow: 0 5px 0 #b0b1a8, 0 8px 18px rgba(10, 41, 71, 0.14);
-    border: 2px solid var(--accent-color);
+    /* Uses standard card styles */
 }
 
 .translation-result {
-    box-shadow: 0 5px 0 #6b4a2e, 0 8px 18px rgba(10, 41, 71, 0.14);
-    border: 2px solid #8B5E3C;
+    /* Uses standard card styles */
 }
 
 .highlight-card {
-    background-color: #e8e9de;
-    border-color: #8B5E3C;
+    background-color: var(--highlight-bg);
+    border-color: var(--highlight-border);
 }
 
 /* Sign badge styling for recognized signs */
@@ -385,14 +367,14 @@ button:disabled {
 
 .sign-badge {
     display: inline-block;
-    background-color: #F3E4C9;
+    background-color: var(--badge-bg);
     border: 1.5px solid var(--primary-action);
     color: var(--primary-action);
     font-weight: 700;
     font-size: 0.85rem;
     padding: 0.2rem 0.6rem;
     border-radius: 6px;
-    box-shadow: 0 2px 0 #071e35, 0 3px 6px rgba(10, 41, 71, 0.2);
+    box-shadow: 0 2px 0 var(--primary-action), 0 3px 6px rgba(0, 0, 0, 0.1);
     animation: badgePop 0.2s ease-out;
     white-space: nowrap;
 }
