@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignBridge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- TensorFlow.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <!-- Teachable Machine Image Model library -->
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SignBridge</h1>
+            <p>Bridging Communication with Real-time Hand Sign Translation</p>
+        </header>
+
+        <section class="main-app">
+            <div class="video-container card">
+                <video id="webcam" autoplay playsinline muted></video>
+                <div id="camera-overlay" class="overlay">
+                    <button id="start-camera-btn" class="primary-btn">Enable Camera</button>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="burst-capture-btn" class="action-btn" disabled>
+                    <span class="btn-text">Start Auto-Translate</span>
+                    <div class="spinner" style="display: none;"></div>
+                </button>
+                <p id="capture-status">Status: Initializing model...</p>
+            </div>
+
+            <div class="live-detection card">
+                <h3>Live Feed Detection</h3>
+                <div class="live-stats">
+                    <p id="live-sign-display">-</p>
+                    <p id="live-confidence-display">Confidence: 0%</p>
+                </div>
+            </div>
+
+            <div class="results-panel">
+                <div class="recognized-signs card">
+                    <h3>Recognized Signs</h3>
+                    <p id="signs-output">Waiting for capture...</p>
+                </div>
+                <div class="translation-result card highlight-card">
+                    <h3>Translation</h3>
+                    <p id="translation-output">Waiting for translation...</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
