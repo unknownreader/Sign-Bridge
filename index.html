@@ -18,19 +18,28 @@
             <p>Bridging Communication with Real-time Hand Sign Translation</p>
         </header>
 
+        <!-- Configuration Settings Panel -->
         <section class="settings-panel card">
             <h2>Configuration</h2>
-            <div class="input-group">
-                <label for="tm-model-url">Teachable Machine Model URL</label>
-                <input type="text" id="tm-model-url" placeholder="https://teachablemachine.withgoogle.com/models/.../">
+            <div class="settings-grid">
+                <div class="input-group">
+                    <label for="tm-model-url">Teachable Machine Model URL</label>
+                    <input type="text" id="tm-model-url" placeholder="https://teachablemachine.withgoogle.com/models/.../">
+                </div>
+                <div class="input-group">
+                    <label for="gemini-api-key">Gemini API Key</label>
+                    <input type="password" id="gemini-api-key" placeholder="Enter your Gemini API Key">
+                </div>
             </div>
-            <button id="save-settings-btn" class="primary-btn">Load Model & Settings</button>
-            <p id="settings-status" class="status-msg"></p>
+            <div class="settings-actions">
+                <button id="save-settings-btn" class="primary-btn">Save & Load Configuration</button>
+                <p id="settings-status" class="status-msg"></p>
+            </div>
         </section>
 
+        <!-- Main Real-Time Sign App -->
         <section class="main-app">
             <div class="video-container card">
-                <!-- We use an id to access it in js -->
                 <video id="webcam" autoplay playsinline muted></video>
                 <div id="camera-overlay" class="overlay">
                     <button id="start-camera-btn" class="primary-btn">Enable Camera</button>
@@ -39,16 +48,26 @@
 
             <div class="controls">
                 <button id="burst-capture-btn" class="action-btn" disabled>
-                    <span class="btn-text">Start Sign Capture</span>
+                    <span class="btn-text">Start Auto-Translate</span>
                     <div class="spinner" style="display: none;"></div>
                 </button>
-                <p id="capture-status">Status: Waiting for camera and model...</p>
+                <p id="capture-status">Status: Please configure settings and load the model.</p>
             </div>
 
+            <!-- Live Sign Inference Panel -->
+            <div class="live-detection card">
+                <h3>Live Feed Detection</h3>
+                <div class="live-stats">
+                    <p id="live-sign-display">-</p>
+                    <p id="live-confidence-display">Confidence: 0%</p>
+                </div>
+            </div>
+
+            <!-- Text & Translation Outputs -->
             <div class="results-panel">
                 <div class="recognized-signs card">
                     <h3>Recognized Signs</h3>
-                    <p id="signs-output">Waiting for capture...</p>
+                    <p id="signs-output">Waiting for camera and model...</p>
                 </div>
                 <div class="translation-result card highlight-card">
                     <h3>Translation</h3>
