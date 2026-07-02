@@ -18,6 +18,25 @@
             <p>Bridging Communication with Real-time Hand Sign Translation</p>
         </header>
 
+        <!-- Configuration Settings Panel -->
+        <section class="settings-panel card">
+            <h2>⚙️ Configuration</h2>
+            <div class="settings-grid">
+                <div class="input-group">
+                    <label for="tm-model-url">Teachable Machine Model URL</label>
+                    <input type="text" id="tm-model-url" placeholder="https://teachablemachine.withgoogle.com/models/.../">
+                </div>
+                <div class="input-group">
+                    <label for="gemini-api-key">Gemini API Key</label>
+                    <input type="password" id="gemini-api-key" placeholder="Enter your Gemini API Key">
+                </div>
+            </div>
+            <div class="settings-actions">
+                <button id="save-settings-btn" class="primary-btn">Save & Load Model</button>
+                <p id="settings-status" class="status-msg"></p>
+            </div>
+        </section>
+
         <!-- Main Real-Time Sign App -->
         <section class="main-app">
             <div class="video-container card">
@@ -32,7 +51,7 @@
                     <span class="btn-text">Start Auto-Translate</span>
                     <div class="spinner" style="display: none;"></div>
                 </button>
-                <p id="capture-status">Status: Initializing model...</p>
+                <p id="capture-status">Status: Please configure settings above.</p>
             </div>
 
             <!-- Live Sign Inference Panel -->
@@ -58,7 +77,6 @@
         </section>
     </div>
 
-    <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

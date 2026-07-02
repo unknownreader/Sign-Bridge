@@ -1,4 +1,9 @@
 // --- DOM Elements ---
+const tmModelUrlInput = document.getElementById('tm-model-url');
+const geminiApiKeyInput = document.getElementById('gemini-api-key');
+const saveSettingsBtn = document.getElementById('save-settings-btn');
+const settingsStatus = document.getElementById('settings-status');
+
 const webcamElement = document.getElementById('webcam');
 const cameraOverlay = document.getElementById('camera-overlay');
 const startCameraBtn = document.getElementById('start-camera-btn');
@@ -18,11 +23,12 @@ const liveConfidenceDisplay = document.getElementById('live-confidence-display')
 let model = null;
 let isCameraReady = false;
 let maxPredictions = 0;
+let geminiApiKey = '';
 
 let isTranslating = false;
 let predictionIntervalId = null;
-let capturedSigns = [];   // current sentence signs (reset after each translation)
-let displaySigns = [];    // all signs shown on screen (max 10, cleared on new session)
+let capturedSigns = [];
+let displaySigns = [];
 const MAX_DISPLAY_SIGNS = 10;
 
 // Stabilization state
@@ -32,41 +38,74 @@ let currentPendingSign = null;
 
 // Idle / Auto-translate timeout state
 let idleTimeoutId = null;
-const IDLE_DELAY_MS = 4000;       // 4 seconds idle to trigger translation
-const CONFIDENCE_THRESHOLD = 0.88; // Require high confidence before accepting a sign
-const STABILITY_FRAMES = 5;        // Must hold same sign for 5 frames (~1.75s) to register
+const IDLE_DELAY_MS = 4000;
+const CONFIDENCE_THRESHOLD = 0.88;
+const STABILITY_FRAMES = 5;
 
-// --- Load Config and Model on Startup ---
+// --- Load Saved Settings from localStorage on Startup ---
 window.addEventListener('DOMContentLoaded', async () => {
-    // Read configuration from config.js (loaded via script tag before this file)
-    if (typeof CONFIG === 'undefined' || !CONFIG.TM_MODEL_URL || !CONFIG.GEMINI_API_KEY) {
-        captureStatus.textContent = 'Status: Error — config.js is missing or incomplete. Please copy config.example.js to config.js and fill in your values.';
-        console.error('SignBridge: CONFIG is missing or incomplete. See config.example.js for the template.');
+    const savedUrl = localStorage.getItem('signbridge_tmModelUrl');
+    const savedKey = localStorage.getItem('signbridge_geminiApiKey');
+
+    if (savedUrl) tmModelUrlInput.value = savedUrl;
+    if (savedKey) geminiApiKeyInput.value = savedKey;
+
+    if (savedUrl && savedKey) {
+        showSettingsStatus('Saved settings found. Loading model...', '');
+        await loadModel(savedUrl, savedKey);
+    } else {
+        showSettingsStatus('Enter your Model URL and API Key, then click Save.', '');
+    }
+});
+
+// --- Save Settings & Load Model ---
+saveSettingsBtn.addEventListener('click', async () => {
+    const url = tmModelUrlInput.value.trim();
+    const key = geminiApiKeyInput.value.trim();
+
+    if (!url || !key) {
+        showSettingsStatus('Both fields are required.', 'error');
         return;
     }
 
-    try {
-        captureStatus.textContent = 'Status: Loading Teachable Machine model...';
+    // Save to localStorage (stays in browser only, never published)
+    localStorage.setItem('signbridge_tmModelUrl', url);
+    localStorage.setItem('signbridge_geminiApiKey', key);
 
-        let tmModelUrl = CONFIG.TM_MODEL_URL;
+    await loadModel(url, key);
+});
+
+async function loadModel(url, key) {
+    try {
+        saveSettingsBtn.disabled = true;
+        showSettingsStatus('Loading Teachable Machine model...', '');
+
+        let tmModelUrl = url;
         if (!tmModelUrl.endsWith('/')) {
             tmModelUrl += '/';
         }
+        geminiApiKey = key;
 
         const modelURL = tmModelUrl + 'model.json';
         const metadataURL = tmModelUrl + 'metadata.json';
 
-        // Load the image model and metadata from Teachable Machine
         model = await tmImage.load(modelURL, metadataURL);
         maxPredictions = model.getTotalClasses();
 
-        captureStatus.textContent = 'Status: Model loaded. Please enable camera to start.';
+        showSettingsStatus('Model loaded successfully! ✅', 'success');
         updateCaptureButtonState();
     } catch (error) {
         console.error("Model loading error:", error);
-        captureStatus.textContent = 'Status: Failed to load model. Check TM_MODEL_URL in config.js.';
+        showSettingsStatus('Failed to load model. Check the URL.', 'error');
+    } finally {
+        saveSettingsBtn.disabled = false;
     }
-});
+}
+
+function showSettingsStatus(msg, type) {
+    settingsStatus.textContent = msg;
+    settingsStatus.className = 'status-msg ' + type;
+}
 
 // --- Camera Setup ---
 startCameraBtn.addEventListener('click', async () => {
@@ -88,7 +127,7 @@ startCameraBtn.addEventListener('click', async () => {
 function updateCaptureButtonState() {
     if (isCameraReady && model) {
         burstCaptureBtn.disabled = false;
-        captureStatus.textContent = 'Status: Ready to translate. Click the button below.';
+        captureStatus.textContent = 'Status: Ready to translate.';
     }
 }
 
@@ -143,7 +182,6 @@ function startAutoTranslation() {
             liveSignDisplay.textContent = className;
             liveConfidenceDisplay.textContent = `Confidence: ${(probability * 100).toFixed(0)}%`;
 
-            // Stabilization Logic
             if (probability >= CONFIDENCE_THRESHOLD) {
                 if (className === currentPendingSign) {
                     stableSignCounter++;
@@ -155,7 +193,6 @@ function startAutoTranslation() {
                 if (stableSignCounter >= STABILITY_FRAMES) {
                     if (className !== lastStableSign) {
                         lastStableSign = className;
-
                         capturedSigns.push(className);
 
                         if (displaySigns.length >= MAX_DISPLAY_SIGNS) {
@@ -176,7 +213,6 @@ function startAutoTranslation() {
                 currentPendingSign = null;
                 stableSignCounter = 0;
             }
-
         } catch (err) {
             console.error("Prediction error:", err);
         }
@@ -215,11 +251,10 @@ function resetIdleTimer() {
     }
 }
 
-// --- Direct Gemini API Translation Logic ---
+// --- Direct Gemini API Translation ---
 async function translateSignsToSentence(signsArray) {
-    const apiKey = CONFIG.GEMINI_API_KEY;
-    if (!apiKey) {
-        translationOutput.textContent = "Error: GEMINI_API_KEY is missing in config.js.";
+    if (!geminiApiKey) {
+        translationOutput.textContent = "Error: Gemini API Key is missing. Configure it above.";
         captureStatus.textContent = 'Status: Error (Missing API Key)';
         return;
     }
@@ -229,24 +264,17 @@ async function translateSignsToSentence(signsArray) {
 Please translate this sequence of words/signs into a natural, easy-to-understand sentence that a normal hearing person would say. 
 Output ONLY the final translated sentence, with no additional formatting, markdown, or explanation.`;
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: promptText
-                    }]
-                }]
+                contents: [{ parts: [{ text: promptText }] }]
             })
         });
 
         if (!response.ok) {
             const errBody = await response.json().catch(() => ({}));
-            const errMsg = errBody.error?.message || `HTTP error ${response.status}`;
-            throw new Error(errMsg);
+            throw new Error(errBody.error?.message || `HTTP error ${response.status}`);
         }
 
         const data = await response.json();
@@ -260,7 +288,7 @@ Output ONLY the final translated sentence, with no additional formatting, markdo
         }
     } catch (error) {
         console.error("Translation error:", error);
-        translationOutput.textContent = `Error during translation: ${error.message}`;
+        translationOutput.textContent = `Error: ${error.message}`;
         captureStatus.textContent = 'Status: Translation error';
     }
 }
