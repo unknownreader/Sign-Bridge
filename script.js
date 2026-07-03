@@ -18,7 +18,7 @@ const liveConfidenceDisplay = document.getElementById('live-confidence-display')
 let model = null;
 let isCameraReady = false;
 let maxPredictions = 0;
-let geminiApiKey = '';
+let geminiApiKey = env.GEMINI_API_KEY;
 
 let isTranslating = false;
 let predictionIntervalId = null;
