@@ -52,12 +52,41 @@ function updateThemeIcon(isDark) {
     }
 }
 
+// --- Helper to fetch and parse .env ---
+async function fetchEnv() {
+    try {
+        const response = await fetch('.env');
+        if (!response.ok) {
+            throw new Error(`Failed to load .env: ${response.statusText}`);
+        }
+        const text = await response.text();
+        const env = {};
+        const lines = text.split(/\r?\n/);
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) continue;
+            const eqIndex = trimmed.indexOf('=');
+            if (eqIndex === -1) continue;
+            const key = trimmed.substring(0, eqIndex).trim();
+            let val = trimmed.substring(eqIndex + 1).trim();
+            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+                val = val.slice(1, -1);
+            }
+            env[key] = val;
+        }
+        return env;
+    } catch (err) {
+        console.error("Could not fetch or parse .env file:", err);
+        return {};
+    }
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
     // Theme initialization
     const savedTheme = localStorage.getItem('signbridge_theme');
     const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const isDark = savedTheme === 'dark' || (!savedTheme && isSystemDark);
-    
+
     if (isDark) {
         document.body.classList.add('dark-mode');
     }
@@ -70,11 +99,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('signbridge_theme', isCurrentlyDark ? 'dark' : 'light');
     });
 
-    if (typeof CONFIG !== 'undefined' && CONFIG.TM_MODEL_URL && CONFIG.GEMINI_API_KEY) {
-        await loadModel(CONFIG.TM_MODEL_URL, CONFIG.GEMINI_API_KEY);
+    const env = await fetchEnv();
+    if (env.TM_MODEL_URL && env.GEMINI_API_KEY) {
+        await loadModel(env.TM_MODEL_URL, env.GEMINI_API_KEY);
     } else {
-        console.warn('CONFIG is missing. Please ensure config.js is loaded and contains TM_MODEL_URL and GEMINI_API_KEY.');
-        if (captureStatus) captureStatus.textContent = 'Status: Configuration missing. Check config.js';
+        console.warn('Configuration missing in .env. Please ensure .env contains TM_MODEL_URL and GEMINI_API_KEY.');
+        if (captureStatus) captureStatus.textContent = 'Status: Configuration missing. Check .env';
     }
 });
 
